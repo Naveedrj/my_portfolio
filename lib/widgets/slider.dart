@@ -1,154 +1,176 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:web_portfolio/widgets/projects_sections.dart';
 
-class ImageSliderWidget extends StatefulWidget {
-  const ImageSliderWidget({super.key});
+import 'contact_section.dart';
 
-  @override
-  _ImageSliderWidgetState createState() => _ImageSliderWidgetState();
-}
+// Shared theme constants (same as IntroSection)
+const Color kBg = Color(0xFF0D1117);
+const Color kPanel = Color(0xFF161B22);
+const Color kBorder = Color(0xFF30363D);
+const Color kAccentBlue = Color(0xFF58A6FF);
+const Color kTextLight = Color(0xFFC9D1D9);
+const Color kMuted = Color(0xFF8B949E);
+const Color kSuccess = Color(0xFF238636);
 
-class _ImageSliderWidgetState extends State<ImageSliderWidget> {
-  final PageController _pageController = PageController();
-  int _currentPage = 0;
-  Timer? _timer;
-
-  final List<String> _images = [
-    'assets/img1.jpg',
-    'assets/img2.jpg',
-    'assets/img3.jpg',
-    'assets/img4.jpg',
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _startAutoSlide();
-  }
-
-  void _startAutoSlide() {
-    _timer = Timer.periodic(Duration(seconds: 4), (timer) {
-      if (_currentPage < _images.length - 1) {
-        _currentPage++;
-      } else {
-        _currentPage = 0;
-      }
-      _pageController.animateToPage(
-        _currentPage,
-        duration: Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-      );
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    _pageController.dispose();
-    super.dispose();
-  }
+class CompanyHeader extends StatelessWidget {
+  final bool isMobile;
+  const CompanyHeader({super.key, required this.isMobile});
 
   @override
   Widget build(BuildContext context) {
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final bool isMobile = screenWidth < 800;
-    return Container(
-      width: double.infinity,
-      height: isMobile ? 280 : 900,
-      decoration: BoxDecoration(
-        color: Colors.black12,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 10,
-            spreadRadius: 3,
-            offset: Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: PageView.builder(
-              controller: _pageController,
-              onPageChanged: (index) {
-                setState(() {
-                  _currentPage = index;
-                });
-              },
-              itemCount: _images.length,
-              itemBuilder: (context, index) {
-                return _buildSliderImage(_images[index]);
-              },
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 1200),
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 20 : 40,
+          vertical: isMobile ? 24 : 40,
+        ),
+        decoration: BoxDecoration(
+          color: kPanel, // same panel color
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: kBorder),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.35), // same shadow
+              blurRadius: 18,
+              offset: Offset(0, 10),
             ),
-          ),
-          Positioned(
-            bottom: 10,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                _images.length,
-                    (index) => _buildDot(index),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Logo (keeps visual weight similar to service cards)
+            Container(
+              width: isMobile ? 60 : 80,
+              height: isMobile ? 60 : 80,
+              decoration: BoxDecoration(
+                color: kBg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: kBorder),
+                boxShadow: [
+                  BoxShadow(
+                    color: kAccentBlue.withOpacity(0.25),
+                    blurRadius: 12,
+                    spreadRadius: 0,
+                  )
+                ],
+              ),
+              child: Center(
+                child: Image.asset(
+                  'assets/sa_logo.png',
+                  width: isMobile ? 40 : 60,
+                  height: isMobile ? 40 : 60,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
-          ),
-          Positioned(
-            right: 10,
-            top: 50,
-            child: IconButton(
-              icon: Icon(Icons.arrow_forward_ios, color: Colors.white),
-              onPressed: () {
-                if (_currentPage < _images.length - 1) {
-                  _pageController.animateToPage(
-                    _currentPage + 1,
-                    duration: Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
-                }
-              },
+            const SizedBox(width: 20),
+            // Name + Slogan (column)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: kAccentBlue.withOpacity(0.1),
+                        blurRadius: 16,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    "SCALEAXIS",
+                    style: GoogleFonts.poppins(
+                      fontSize: isMobile ? 22 : 28,
+                      fontWeight: FontWeight.w700,
+                      color: kAccentBlue, // matches other header styles
+                    ),
+                  ),
+                ),
+                Text(
+                  "Where Ideas Reach the Summit",
+                  style:GoogleFonts.robotoMono(
+                    fontSize: isMobile ? 10 : 12,
+                    color: kTextLight,
+                    height: 1.6,
+                  ),
+                ),
+              ],
             ),
-          ),
-          Positioned(
-            left: 10,
-            top: 50,
-            child: IconButton(
-              icon: Icon(Icons.arrow_back_ios, color: Colors.white),
-              onPressed: () {
-                if (_currentPage > 0) {
-                  _pageController.animateToPage(
-                    _currentPage - 1,
-                    duration: Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
-                }
-              },
+            Spacer(),
+            isMobile ? SizedBox() : Center(
+              child: Wrap(
+                spacing: 14,
+                runSpacing: 10,
+                alignment: WrapAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => ContactUsScreen()));
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kSuccess,
+                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      elevation: 8,
+                    ),
+                    child: Text(
+                      "Get in Touch",
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  OutlinedButton(
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => PortfolioScreen()));
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: kAccentBlue, width: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: Text(
+                      "View Portfolio",
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: kAccentBlue,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+}
 
-  Widget _buildSliderImage(String imagePath) {
-    return Image.asset(
-      imagePath,
-      fit: BoxFit.cover,
-    );
-  }
+class CompanyDescription extends StatelessWidget {
+  final bool isMobile;
+  const CompanyDescription({super.key, required this.isMobile});
 
-  Widget _buildDot(int index) {
-    return AnimatedContainer(
-      duration: Duration(milliseconds: 300),
-      margin: EdgeInsets.symmetric(horizontal: 5),
-      height: 8,
-      width: 8,
-      decoration: BoxDecoration(
-        color: _currentPage == index ? Colors.blue : Colors.white,
-        borderRadius: BorderRadius.circular(50),
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      "We provide cutting-edge digital solutions to real-world problems, helping businesses thrive in today’s fast-paced digital landscape. "
+          "From custom mobile apps to high-performance web platforms, we design, develop, and deliver technology that not only works but scales with your vision. "
+          "Our creative team also specializes in building unique brand identities, designing impactful logos, and crafting engaging user experiences that connect with your audience. "
+          "Whether you’re a startup looking to make your mark or an established business aiming to grow, ScaleAxis is your partner in innovation — where ideas reach the summit.",
+      textAlign: TextAlign.left,
+      style: GoogleFonts.robotoMono(
+        fontSize: isMobile ? 12 : 13,
+        color: kMuted,
+        height: 1.5,
       ),
     );
   }

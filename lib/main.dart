@@ -21,13 +21,13 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'NavTec Solutions',
+      title: 'ScaleAxis Officials',
       theme: ThemeData(
         textTheme: GoogleFonts.poppinsTextTheme(), // Apply Poppins globally
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: IntroSection(),
+      home: const IntroSection(),
     );
   }
 }
