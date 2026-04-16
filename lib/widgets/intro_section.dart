@@ -860,7 +860,7 @@ class _AnimatedCompanyHeaderState extends State<AnimatedCompanyHeader> with Tick
               ),
               const SizedBox(height: 20),
               Text(
-                "We design, build, and scale premium software solutions.",
+                "We design, build, and scale software solutions.",
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
                     fontSize: widget.isMobile ? 14 : 16,
@@ -1007,7 +1007,6 @@ class _ModernFAQItemState extends State<_ModernFAQItem> with SingleTickerProvide
   }
 }
 
-// --- CANNON FIRE LINE ANIMATION ---
 class SpeedLinesPainter extends CustomPainter {
   final double progress;
 
@@ -1016,8 +1015,8 @@ class SpeedLinesPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFF58A6FF).withOpacity(0.9) // Glowing blue for energy
-      ..strokeWidth = 3.0 // Slightly thicker
+      ..color = const Color(0xFF58A6FF) // Base color
+      ..strokeWidth = 1.0 // REDUCED WIDTH: Was 3.0
       ..strokeCap = StrokeCap.round;
 
     // Different lengths and offsets for varied firing
@@ -1037,7 +1036,6 @@ class SpeedLinesPainter extends CustomPainter {
     double rawProgress = ((progress * speedMultiplier) + startXOffset) % 1.0;
 
     // 2. Apply Cubic Ease-In for "Cannon Fire" acceleration on individual beams
-    // This makes individual beams shoot off rather than slide linearly
     double easedProgress = rawProgress * rawProgress * rawProgress;
 
     double totalWidth = size.width + length * 2;
@@ -1057,7 +1055,8 @@ class SpeedLinesPainter extends CustomPainter {
       opacity = opacity * ((size.width - startX) / (size.width * 0.3)).clamp(0.0, 1.0);
     }
 
-    paint.color = paint.color.withOpacity(opacity * 0.7);
+    // REDUCED OPACITY: Changed multiplier from 0.7 to 0.25
+    paint.color = paint.color.withOpacity(opacity * 0.25);
 
     canvas.drawLine(Offset(startX, yOffset), Offset(endX, yOffset), paint);
   }

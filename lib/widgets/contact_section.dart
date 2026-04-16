@@ -32,9 +32,9 @@ class _ContactUsScreenState extends State<ContactUsScreen> with TickerProviderSt
 
   // --- TEAM DATA ---
   final List<Map<String, String>> teamMembers = [
-    {"name": "Naveed Ur Rehman", "role": "Founder & Developer", "image": "assets/naveed.jpeg", "email": "rananveed123@gmail.com"},
+    {"name": "Naveed Ur Rehman", "role": "Founder & Business Analyst", "image": "assets/naveed.jpeg", "email": "rananveed123@gmail.com"},
     {"name": "M. Hammad", "role": "Co-Founder & Developer", "image": "assets/hammad.jpeg", "email": "hammadsohail888@gmail.com"},
-    {"name": "Taha Yousaf", "role": "Amazon consultant & Business", "image": "assets/taha.jpeg", "email": ""},
+    {"name": "Taha Yousaf", "role": "Amazon Con. & Business Developer", "image": "assets/taha.jpeg", "email": ""},
     {"name": "Usman Ahmad", "role": "Full Stack Flutter Developer", "image": "assets/usman.jpeg", "email": ""},
     {"name": "Zain Naseer", "role": "Business Developer", "image": "assets/zain.jpeg", "email": ""},
   ];
