@@ -46,11 +46,11 @@ const List<ProjectModel> portfolioData = [
     "Book exclusive tables at Asia’s largest club in Bangkok. Skip the wait and own the night with seamless reservations.",
     techStack: ["Flutter", "Node.js" , "Firebase"],
     images: [
-      "assets/fvture/f1.png",
-      "assets/fvture/f2.png",
-      "assets/fvture/f3.png",
       "assets/fvture/f4.png",
       "assets/fvture/f5.png",
+      "assets/fvture/f3.png",
+      "assets/fvture/f2.png",
+      "assets/fvture/f1.png",
       "assets/fvture/f6.png",
       "assets/fvture/f7.png",
     ],
@@ -94,23 +94,23 @@ const List<ProjectModel> portfolioData = [
     badge: "Walk-to-Earn",
   ),
 
-  ProjectModel(
-    title: "Service Provider",
-    description:
-    "Platform to hire experts for your tasks, and track their progress.",
-    techStack: ["Flutter", "Supabase", "Stripe"],
-    images: [
-      "assets/sp/sp1.png",
-      "assets/sp/sp2.png",
-      "assets/sp/sp3.png",
-      "assets/sp/sp4.png",
-      "assets/sp/sp5.png",
-      "assets/sp/sp6.png",
-      "assets/sp/sp7.png",
-    ],
-    playStoreLink: null,
-    appStoreLink: null,
-  ),
+  // ProjectModel(
+  //   title: "Service Provider",
+  //   description:
+  //   "Platform to hire experts for your tasks, and track their progress.",
+  //   techStack: ["Flutter", "Supabase", "Stripe"],
+  //   images: [
+  //     "assets/sp/sp1.png",
+  //     "assets/sp/sp2.png",
+  //     "assets/sp/sp3.png",
+  //     "assets/sp/sp4.png",
+  //     "assets/sp/sp5.png",
+  //     "assets/sp/sp6.png",
+  //     "assets/sp/sp7.png",
+  //   ],
+  //   playStoreLink: null,
+  //   appStoreLink: null,
+  // ),
 
   ProjectModel(
     title: "Music Plugg",
