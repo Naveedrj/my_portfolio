@@ -3,25 +3,26 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // REQUIRED FOR WHATSAPP ICON
-
-// Make sure these match your actual project structure
-import 'package:web_portfolio/widgets/projects_sections.dart';
-import 'intro_section.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class ContactUsScreen extends StatefulWidget {
   const ContactUsScreen({super.key});
 
-  // 🎨 Theme Colors
+  // 🎨 IDE Theme Colors
   static const Color kBg = Color(0xFF0D1117);
-  static const Color kPanel = Color(0xFF161B22);
-  static const Color kPanelLight = Color(0xFF1C2128);
+  static const Color kIdePanel = Color(0xFF161B22);
+  static const Color kIdeDark = Color(0xFF0A0D12);
   static const Color kBorder = Color(0xFF30363D);
   static const Color kAccentBlue = Color(0xFF58A6FF);
+  static const Color kAccentPurple = Color(0xFFBC8DFF);
   static const Color kTextLight = Color(0xFFC9D1D9);
   static const Color kMuted = Color(0xFF8B949E);
   static const Color kGreen = Color(0xFF2EA043);
-  static const Color kPurple = Color(0xFFBC8CFF);
+
+  // Syntax Colors
+  static const Color kSyntaxKeyword = Color(0xFFFF7B72);
+  static const Color kSyntaxString = Color(0xFFA5D6FF);
+  static const Color kSyntaxClass = Color(0xFFD2A8FF);
 
   @override
   State<ContactUsScreen> createState() => _ContactUsScreenState();
@@ -57,142 +58,125 @@ class _ContactUsScreenState extends State<ContactUsScreen> with TickerProviderSt
     final screenWidth = MediaQuery.of(context).size.width;
     final bool isMobile = screenWidth < 850;
 
-    return Scaffold(
-      backgroundColor: ContactUsScreen.kBg,
-      appBar: isMobile
-          ? AppBar(
-        backgroundColor: ContactUsScreen.kBg,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      )
-          : null,
-      body: Stack(
-        children: [
-          // Background Glows
-          const Positioned(top: -100, right: -100, child: _PulsingGlow(color: ContactUsScreen.kAccentBlue, size: 500, duration: Duration(seconds: 5))),
-          const Positioned(bottom: -150, left: -150, child: _PulsingGlow(color: ContactUsScreen.kPurple, size: 600, duration: Duration(seconds: 6), delay: Duration(seconds: 2))),
+    // NO Scaffold! Just the Stack to fit inside the IDE Container
+    return Stack(
+      children: [
+        // Background Glows
+        const Positioned(top: -100, right: -100, child: _PulsingGlow(color: ContactUsScreen.kAccentBlue, size: 500, duration: Duration(seconds: 5))),
+        const Positioned(bottom: -150, left: -150, child: _PulsingGlow(color: ContactUsScreen.kAccentPurple, size: 600, duration: Duration(seconds: 6), delay: Duration(seconds: 2))),
 
-          SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1100),
-                child: Column(
-                  children: [
-                    SizedBox(height: isMobile ? 40 : 120),
+        SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1100),
+              child: Column(
+                children: [
+                  SizedBox(height: isMobile ? 40 : 80),
 
-                    // --- HEADER ---
-                    _FadeIn(
-                      controller: _entranceController,
-                      delay: 0,
-                      child: Column(
-                        children: [
-                          Text("OUR PEOPLE", style: GoogleFonts.robotoMono(fontSize: 14, fontWeight: FontWeight.bold, color: ContactUsScreen.kAccentBlue, letterSpacing: 2)),
-                          const SizedBox(height: 16),
-                          Text("Meet The ScaleAxis Team.", textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: isMobile ? 36 : 56, fontWeight: FontWeight.w800, color: Colors.white, height: 1.1)),
-                          const SizedBox(height: 20),
-                          SizedBox(
-                            width: 600,
-                            child: Text("We are a collective of developers, designers, and strategists turning complex problems into elegant digital solutions.", textAlign: TextAlign.center, style: GoogleFonts.inter(fontSize: isMobile ? 16 : 18, color: ContactUsScreen.kMuted, height: 1.5)),
+                  // --- HEADER ---
+                  _FadeIn(
+                    controller: _entranceController,
+                    delay: 0,
+                    child: Column(
+                      children: [
+                        _buildCodeHeader("List<TeamMember>", "getScaleAxisTeam", "()", ""),
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          width: 600,
+                          child: Text(
+                              "// We are a collective of developers, designers, and strategists turning complex problems into elegant digital solutions.",
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.robotoMono(fontSize: isMobile ? 14 : 16, color: ContactUsScreen.kMuted, height: 1.5)
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
+                  ),
 
-                    const SizedBox(height: 80),
+                  const SizedBox(height: 80),
 
-                    // --- TEAM LAYOUT ---
-                    if (isMobile)
-                      Column(
-                        children: teamMembers.asMap().entries.map((entry) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 24),
-                            child: _FadeIn(
-                              controller: _entranceController,
-                              delay: 200 + (entry.key * 100),
-                              child: SizedBox(
-                                width: screenWidth - 48,
-                                child: _HoverCard(
-                                  builder: (context, isHovered) => _ProfileContent(member: entry.value, isHovered: isHovered),
-                                ),
+                  // --- TEAM LAYOUT ---
+                  if (isMobile)
+                    Column(
+                      children: teamMembers.asMap().entries.map((entry) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 24),
+                          child: _FadeIn(
+                            controller: _entranceController,
+                            delay: 200 + (entry.key * 100),
+                            child: SizedBox(
+                              width: screenWidth - 48,
+                              child: _HoverCard(
+                                builder: (context, isHovered) => _ProfileContent(member: entry.value, isHovered: isHovered),
                               ),
                             ),
-                          );
-                        }).toList(),
-                      )
-                    else
-                      Column(
-                        children: [
-                          // Top Row
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _buildDesktopTeamCard(teamMembers[0], 200),
-                              const SizedBox(width: 24),
-                              _buildDesktopTeamCard(teamMembers[1], 300),
-                            ],
                           ),
-                          const SizedBox(height: 24),
-                          // Bottom Row
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _buildDesktopTeamCard(teamMembers[2], 400),
-                              const SizedBox(width: 24),
-                              _buildDesktopTeamCard(teamMembers[3], 500),
-                              const SizedBox(width: 24),
-                              _buildDesktopTeamCard(teamMembers[4], 600),
-                            ],
-                          ),
-                        ],
-                      ),
-
-                    const SizedBox(height: 120),
-
-                    // --- CONTACT SECTION ---
-                    _FadeIn(
-                      controller: _entranceController,
-                      delay: 700,
-                      child: Column(
-                        children: [
-                          Text("GET IN TOUCH", style: GoogleFonts.robotoMono(color: ContactUsScreen.kAccentBlue, letterSpacing: 2, fontSize: 14, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 16),
-                          Text("Let's Start a Conversation", textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: isMobile ? 28 : 40, fontWeight: FontWeight.bold, color: Colors.white, height: 1.1)),
-                          const SizedBox(height: 40),
-                          _UnifiedContactSection(isMobile: isMobile),
-                        ],
-                      ),
+                        );
+                      }).toList(),
+                    )
+                  else
+                    Column(
+                      children: [
+                        // Top Row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildDesktopTeamCard(teamMembers[0], 200),
+                            const SizedBox(width: 24),
+                            _buildDesktopTeamCard(teamMembers[1], 300),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        // Bottom Row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildDesktopTeamCard(teamMembers[2], 400),
+                            const SizedBox(width: 24),
+                            _buildDesktopTeamCard(teamMembers[3], 500),
+                            const SizedBox(width: 24),
+                            _buildDesktopTeamCard(teamMembers[4], 600),
+                          ],
+                        ),
+                      ],
                     ),
 
-                    const SizedBox(height: 100),
-                    _FadeIn(controller: _entranceController, delay: 900, child: Text("© 2024 ScaleAxis. Made in Pakistan.", style: GoogleFonts.robotoMono(color: ContactUsScreen.kMuted, fontSize: 12))),
-                    const SizedBox(height: 40),
-                  ],
-                ),
+                  const SizedBox(height: 120),
+
+                  // --- CONTACT SECTION ---
+                  _FadeIn(
+                    controller: _entranceController,
+                    delay: 700,
+                    child: Column(
+                      children: [
+                        _buildCodeHeader("Future<void>", "initiateContact", "async", ""),
+                        const SizedBox(height: 16),
+                        Text(
+                            "\"Let's Start a Conversation\";",
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.robotoMono(fontSize: isMobile ? 24 : 32, fontWeight: FontWeight.bold, color: ContactUsScreen.kSyntaxString, height: 1.1)
+                        ),
+                        const SizedBox(height: 40),
+                        _UnifiedContactSection(isMobile: isMobile),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 100),
+                  _FadeIn(
+                      controller: _entranceController,
+                      delay: 900,
+                      child: Text("// EOF", style: GoogleFonts.robotoMono(color: ContactUsScreen.kMuted, fontSize: 14, fontWeight: FontWeight.bold))
+                  ),
+                  const SizedBox(height: 80),
+                ],
               ),
             ),
           ),
-
-          // --- NAVBAR ---
-          if (!isMobile)
-            Positioned(
-              top: 0, left: 0, right: 0,
-              child: ClipRRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(
-                    color: ContactUsScreen.kBg.withOpacity(0.8),
-                    child: _buildNavBar(isMobile, context),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -209,61 +193,18 @@ class _ContactUsScreenState extends State<ContactUsScreen> with TickerProviderSt
     );
   }
 
-  Widget _buildNavBar(bool isMobile, BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 40, vertical: 20),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: ContactUsScreen.kBorder)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  // Helper to build Code-like Headers (Matching intro_section)
+  Widget _buildCodeHeader(String keyword1, String name, String keyword2, String parameter) {
+    return RichText(
+      textAlign: TextAlign.center,
+      text: TextSpan(
+        style: GoogleFonts.robotoMono(fontSize: 28, fontWeight: FontWeight.bold),
         children: [
-          Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.asset("assets/sa_logo.png", width: 32, height: 32, fit: BoxFit.cover, errorBuilder: (c, o, s) => const Icon(Icons.code, color: ContactUsScreen.kAccentBlue)),
-              ),
-              const SizedBox(width: 12),
-              Text("ScaleAxis", style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: ContactUsScreen.kTextLight)),
-            ],
-          ),
-          if (!isMobile)
-            Row(
-              children: [
-                _navLink("Home", () {
-                  Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const IntroSection()), (route) => false);
-                }, isActive: false),
-                const SizedBox(width: 40),
-                _navLink("Portfolio", () {
-                  Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const PortfolioScreen()), (route) => false);
-                }, isActive: false),
-                const SizedBox(width: 40),
-                _navLink("Contact Us", () {}, isActive: true),
-              ],
-            )
-        ],
-      ),
-    );
-  }
-
-  Widget _navLink(String text, VoidCallback onTap, {bool isActive = false}) {
-    return InkWell(
-      onTap: onTap, hoverColor: Colors.transparent, splashColor: Colors.transparent, highlightColor: Colors.transparent,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            text,
-            style: GoogleFonts.poppins(
-              color: isActive ? ContactUsScreen.kAccentBlue : ContactUsScreen.kTextLight,
-              fontWeight: FontWeight.w500,
-              fontSize: 14,
-              shadows: isActive ? [Shadow(color: ContactUsScreen.kAccentBlue.withOpacity(0.5), blurRadius: 10)] : [],
-            ),
-          ),
-          if (isActive)
-            Container(margin: const EdgeInsets.only(top: 4), width: 4, height: 4, decoration: const BoxDecoration(color: ContactUsScreen.kAccentBlue, shape: BoxShape.circle))
+          TextSpan(text: "$keyword1 ", style: const TextStyle(color: ContactUsScreen.kSyntaxKeyword)),
+          TextSpan(text: "$name ", style: const TextStyle(color: ContactUsScreen.kSyntaxClass)),
+          if (keyword2.isNotEmpty) TextSpan(text: "$keyword2 ", style: const TextStyle(color: ContactUsScreen.kSyntaxKeyword)),
+          if (parameter.isNotEmpty) TextSpan(text: parameter, style: const TextStyle(color: ContactUsScreen.kSyntaxClass)),
+          const TextSpan(text: " {", style: TextStyle(color: ContactUsScreen.kTextLight)),
         ],
       ),
     );
@@ -293,14 +234,9 @@ class _ProfileContent extends StatelessWidget {
               Container(
                 height: 80,
                 decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                  gradient: LinearGradient(
-                    colors: isHovered
-                        ? [ContactUsScreen.kAccentBlue.withOpacity(0.3), ContactUsScreen.kPurple.withOpacity(0.3)]
-                        : [ContactUsScreen.kBorder, ContactUsScreen.kPanelLight],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(8)), // IDE Square borders
+                  color: isHovered ? ContactUsScreen.kAccentBlue.withOpacity(0.15) : ContactUsScreen.kBg,
+                  border: const Border(bottom: BorderSide(color: ContactUsScreen.kBorder)),
                 ),
               ),
               Positioned(
@@ -309,7 +245,7 @@ class _ProfileContent extends StatelessWidget {
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: ContactUsScreen.kPanel,
+                    color: ContactUsScreen.kIdePanel,
                     shape: BoxShape.circle,
                     border: Border.all(color: isHovered ? ContactUsScreen.kAccentBlue : ContactUsScreen.kBorder, width: 2),
                   ),
@@ -337,8 +273,8 @@ class _ProfileContent extends StatelessWidget {
           child: Column(
             children: [
               Text(
-                member["name"]!,
-                style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                "\"${member["name"]!}\"",
+                style: GoogleFonts.robotoMono(color: ContactUsScreen.kSyntaxString, fontWeight: FontWeight.bold, fontSize: 16),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -348,7 +284,8 @@ class _ProfileContent extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
                   color: ContactUsScreen.kAccentBlue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(4), // IDE look
+                  border: Border.all(color: ContactUsScreen.kAccentBlue.withOpacity(0.3)),
                 ),
                 child: Text(
                   member["role"]!,
@@ -362,7 +299,6 @@ class _ProfileContent extends StatelessWidget {
                 const Divider(color: ContactUsScreen.kBorder, height: 1),
                 const SizedBox(height: 16),
 
-                // Use the new custom TeamEmailRow here
                 _TeamEmailRow(email: member["email"]!),
               ]
             ],
@@ -373,11 +309,9 @@ class _ProfileContent extends StatelessWidget {
   }
 }
 
-// --- NEW WIDGET: Dedicated Email Row for Profile Cards ---
-// --- NEW WIDGET: Dedicated Email Row for Profile Cards ---
+// --- Email Row for Profile Cards ---
 class _TeamEmailRow extends StatefulWidget {
   final String email;
-
   const _TeamEmailRow({required this.email});
 
   @override
@@ -405,13 +339,12 @@ class _TeamEmailRowState extends State<_TeamEmailRow> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.02), // Very subtle background
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: ContactUsScreen.kBorder.withOpacity(0.5)),
+        color: ContactUsScreen.kBg,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: ContactUsScreen.kBorder),
       ),
       child: Row(
         children: [
-          // Email Text (Scales down if too long)
           Expanded(
             child: FittedBox(
               fit: BoxFit.scaleDown,
@@ -426,16 +359,12 @@ class _TeamEmailRowState extends State<_TeamEmailRow> {
             ),
           ),
           const SizedBox(width: 8),
-
-          // Copy Icon Button
           _ActionButton(
             icon: _copied ? Icons.check : Icons.copy_rounded,
             color: _copied ? ContactUsScreen.kGreen : ContactUsScreen.kMuted,
             onTap: _copyToClipboard,
           ),
           const SizedBox(width: 4),
-
-          // Launch (Mail) Icon Button
           _ActionButton(
             icon: Icons.open_in_new_rounded,
             color: ContactUsScreen.kAccentBlue,
@@ -447,7 +376,7 @@ class _TeamEmailRowState extends State<_TeamEmailRow> {
   }
 }
 
-// --- PREMIUM UNIFIED CONTACT SECTION ---
+// --- UNIFIED CONTACT SECTION ---
 class _UnifiedContactSection extends StatelessWidget {
   final bool isMobile;
   const _UnifiedContactSection({required this.isMobile});
@@ -457,78 +386,34 @@ class _UnifiedContactSection extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: ContactUsScreen.kPanel,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: ContactUsScreen.kBorder.withOpacity(0.5)),
+        color: ContactUsScreen.kIdeDark,
+        borderRadius: BorderRadius.circular(8), // IDE styling
+        border: Border.all(color: ContactUsScreen.kBorder),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 30, offset: const Offset(0, 15)),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(8),
         child: isMobile
             ? Column(
           children: [
-            _HoverableContactColumn(
-                icon: Icons.business,
-                title: "ScaleAxis HQ",
-                subtitle: "Specializing in cross-platform digital solutions.",
-                isMobile: isMobile
-            ),
+            _HoverableContactColumn(icon: Icons.business, title: "ScaleAxis HQ", subtitle: "// Specializing in cross-platform digital solutions.", isMobile: isMobile),
             _buildHorizontalGradientDivider(),
-            _HoverableContactColumn(
-                icon: Icons.email_outlined,
-                title: "Email Us",
-                subtitle: "Drop us a line anytime.",
-                type: _InteractionType.email,
-                interactDataList: const ["scaleaxisofficials@gmail.com"],
-                isMobile: isMobile
-            ),
+            _HoverableContactColumn(icon: Icons.email_outlined, title: "Email Us", subtitle: "// Drop us a line anytime.", type: _InteractionType.email, interactDataList: const ["scaleaxisofficials@gmail.com"], isMobile: isMobile),
             _buildHorizontalGradientDivider(),
-            _HoverableContactColumn(
-                icon: Icons.phone_android,
-                title: "Call / WhatsApp",
-                subtitle: "Reach out to us directly.",
-                type: _InteractionType.phone,
-                interactDataList: const ["+92 312 7632386", "+92 313 0778785"],
-                isMobile: isMobile
-            ),
+            _HoverableContactColumn(icon: Icons.phone_android, title: "Call / WhatsApp", subtitle: "// Reach out to us directly.", type: _InteractionType.phone, interactDataList: const ["+92 312 7632386", "+92 313 0778785"], isMobile: isMobile),
           ],
         )
             : IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                  child: _HoverableContactColumn(
-                      icon: Icons.business,
-                      title: "ScaleAxis HQ",
-                      subtitle: "Specializing in cross-platform digital solutions.",
-                      isMobile: isMobile
-                  )
-              ),
+              Expanded(child: _HoverableContactColumn(icon: Icons.business, title: "ScaleAxis HQ", subtitle: "// Specializing in cross-platform digital solutions.", isMobile: isMobile)),
               _buildVerticalGradientDivider(),
-              Expanded(
-                  child: _HoverableContactColumn(
-                      icon: Icons.email_outlined,
-                      title: "Email Us",
-                      subtitle: "Drop us a line anytime.",
-                      type: _InteractionType.email,
-                      interactDataList: const ["scaleaxisofficials@gmail.com"],
-                      isMobile: isMobile
-                  )
-              ),
+              Expanded(child: _HoverableContactColumn(icon: Icons.email_outlined, title: "Email Us", subtitle: "// Drop us a line anytime.", type: _InteractionType.email, interactDataList: const ["scaleaxisofficials@gmail.com"], isMobile: isMobile)),
               _buildVerticalGradientDivider(),
-              Expanded(
-                  child: _HoverableContactColumn(
-                      icon: Icons.phone_android,
-                      title: "Call / WhatsApp",
-                      subtitle: "Reach out to us directly.",
-                      type: _InteractionType.phone,
-                      interactDataList: const ["+92 312 7632386", "+92 313 0778785"],
-                      isMobile: isMobile
-                  )
-              ),
+              Expanded(child: _HoverableContactColumn(icon: Icons.phone_android, title: "Call / WhatsApp", subtitle: "// Reach out to us directly.", type: _InteractionType.phone, interactDataList: const ["+92 312 7632386", "+92 313 0778785"], isMobile: isMobile)),
             ],
           ),
         ),
@@ -539,38 +424,14 @@ class _UnifiedContactSection extends StatelessWidget {
   Widget _buildVerticalGradientDivider() {
     return Container(
       width: 1,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.transparent,
-            ContactUsScreen.kBorder.withOpacity(0.8),
-            ContactUsScreen.kBorder.withOpacity(0.8),
-            Colors.transparent,
-          ],
-          stops: const [0.0, 0.2, 0.8, 1.0],
-        ),
-      ),
+      color: ContactUsScreen.kBorder,
     );
   }
 
   Widget _buildHorizontalGradientDivider() {
     return Container(
       height: 1,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [
-            Colors.transparent,
-            ContactUsScreen.kBorder.withOpacity(0.8),
-            ContactUsScreen.kBorder.withOpacity(0.8),
-            Colors.transparent,
-          ],
-          stops: const [0.0, 0.2, 0.8, 1.0],
-        ),
-      ),
+      color: ContactUsScreen.kBorder,
     );
   }
 }
@@ -585,12 +446,7 @@ class _HoverableContactColumn extends StatefulWidget {
   final bool isMobile;
 
   const _HoverableContactColumn({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    this.type,
-    this.interactDataList,
-    required this.isMobile,
+    required this.icon, required this.title, required this.subtitle, this.type, this.interactDataList, required this.isMobile,
   });
 
   @override
@@ -608,7 +464,7 @@ class _HoverableContactColumnState extends State<_HoverableContactColumn> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeOutCubic,
-        color: _isHovered ? Colors.white.withOpacity(0.02) : Colors.transparent,
+        color: _isHovered ? ContactUsScreen.kIdePanel : Colors.transparent,
         padding: EdgeInsets.all(widget.isMobile ? 32 : 48),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -618,30 +474,17 @@ class _HoverableContactColumnState extends State<_HoverableContactColumn> {
               duration: const Duration(milliseconds: 250),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: _isHovered
-                    ? ContactUsScreen.kAccentBlue.withOpacity(0.15)
-                    : ContactUsScreen.kAccentBlue.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                    color: _isHovered
-                        ? ContactUsScreen.kAccentBlue.withOpacity(0.3)
-                        : Colors.transparent
-                ),
-                boxShadow: _isHovered ? [
-                  BoxShadow(color: ContactUsScreen.kAccentBlue.withOpacity(0.2), blurRadius: 20, spreadRadius: -5)
-                ] : [],
+                color: _isHovered ? ContactUsScreen.kAccentBlue.withOpacity(0.15) : ContactUsScreen.kBg,
+                borderRadius: BorderRadius.circular(8), // IDE Style
+                border: Border.all(color: _isHovered ? ContactUsScreen.kAccentBlue.withOpacity(0.3) : ContactUsScreen.kBorder),
               ),
-              child: Icon(
-                  widget.icon,
-                  color: _isHovered ? Colors.white : ContactUsScreen.kAccentBlue,
-                  size: 28
-              ),
+              child: Icon(widget.icon, color: _isHovered ? Colors.white : ContactUsScreen.kAccentBlue, size: 28),
             ),
             const SizedBox(height: 24),
 
             AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 200),
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.robotoMono(
                   color: _isHovered ? ContactUsScreen.kAccentBlue : Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold
@@ -649,10 +492,7 @@ class _HoverableContactColumnState extends State<_HoverableContactColumn> {
               child: Text(widget.title),
             ),
             const SizedBox(height: 8),
-            Text(
-                widget.subtitle,
-                style: GoogleFonts.inter(color: ContactUsScreen.kMuted, height: 1.5, fontSize: 14)
-            ),
+            Text(widget.subtitle, style: GoogleFonts.robotoMono(color: ContactUsScreen.kMuted, height: 1.5, fontSize: 13)), // IDE comment style
 
             if (widget.type != null && widget.interactDataList != null) ...[
               const SizedBox(height: 24),
@@ -681,12 +521,7 @@ class _InteractiveRow extends StatefulWidget {
   final _InteractionType type;
   final bool isCompact;
 
-  const _InteractiveRow({
-    required this.icon,
-    required this.text,
-    required this.type,
-    this.isCompact = false,
-  });
+  const _InteractiveRow({required this.icon, required this.text, required this.type, this.isCompact = false});
 
   @override
   State<_InteractiveRow> createState() => _InteractiveRowState();
@@ -727,8 +562,9 @@ class _InteractiveRowState extends State<_InteractiveRow> {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-            color: _hovering ? Colors.white.withOpacity(0.05) : ContactUsScreen.kBg.withOpacity(0.3),
-            borderRadius: BorderRadius.circular(8)
+            color: _hovering ? ContactUsScreen.kBg : ContactUsScreen.kBg.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: ContactUsScreen.kBorder)
         ),
         child: Row(
           children: [
@@ -754,23 +590,11 @@ class _InteractiveRowState extends State<_InteractiveRow> {
             if (widget.isCompact) const Spacer(),
 
             if (widget.type == _InteractionType.phone) ...[
-              _ActionButton(
-                  icon: Icons.call,
-                  color: ContactUsScreen.kAccentBlue,
-                  onTap: _launchCall
-              ),
+              _ActionButton(icon: Icons.call, color: ContactUsScreen.kAccentBlue, onTap: _launchCall),
               const SizedBox(width: 8),
-              _ActionButton(
-                  customIcon: const FaIcon(FontAwesomeIcons.whatsapp, size: 16, color: ContactUsScreen.kGreen),
-                  color: ContactUsScreen.kGreen,
-                  onTap: _launchWhatsApp
-              ),
+              _ActionButton(customIcon: const FaIcon(FontAwesomeIcons.whatsapp, size: 16, color: ContactUsScreen.kGreen), color: ContactUsScreen.kGreen, onTap: _launchWhatsApp),
             ] else ...[
-              _ActionButton(
-                  icon: Icons.send_rounded,
-                  color: ContactUsScreen.kAccentBlue,
-                  onTap: _launchEmail
-              ),
+              _ActionButton(icon: Icons.send_rounded, color: ContactUsScreen.kAccentBlue, onTap: _launchEmail),
             ],
 
             if (widget.isCompact) const Spacer(),
@@ -804,13 +628,13 @@ class _ActionButtonState extends State<_ActionButton> {
       onExit: (_) => setState(() => _btnHovered = false),
       child: InkWell(
         onTap: widget.onTap,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(4),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
               color: _btnHovered ? widget.color.withOpacity(0.2) : widget.color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8)
+              borderRadius: BorderRadius.circular(4)
           ),
           child: widget.customIcon ?? Icon(widget.icon, size: 16, color: widget.color),
         ),
@@ -836,10 +660,10 @@ class _HoverCardState extends State<_HoverCard> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeOutCubic,
-        transform: Matrix4.identity()..translate(0.0, _isHovered ? -8.0 : 0.0),
+        transform: Matrix4.identity()..translate(0.0, _isHovered ? -4.0 : 0.0), // Subtle lift
         decoration: BoxDecoration(
-            color: ContactUsScreen.kPanel,
-            borderRadius: BorderRadius.circular(16),
+            color: ContactUsScreen.kIdePanel,
+            borderRadius: BorderRadius.circular(8), // IDE Corners
             border: Border.all(color: _isHovered ? ContactUsScreen.kAccentBlue.withOpacity(0.5) : ContactUsScreen.kBorder),
             boxShadow: [
               BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 5)),

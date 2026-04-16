@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:web_portfolio/base_screen.dart';
 import 'package:web_portfolio/widgets/intro_section.dart';
 import 'firebase_options.dart';
 import 'home_page.dart'; // Generated file after Firebase setup
@@ -27,7 +28,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const IntroSection(),
+      home: const IdeBaseScreen(),
     );
   }
 }

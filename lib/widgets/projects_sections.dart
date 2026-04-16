@@ -1,12 +1,9 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+// Make sure this points to your actual data file
 import '../project_data.dart';
-// Ensure these imports match your actual file names!
-import 'contact_section.dart';
-import 'intro_section.dart';
 
 // =========================================================
 // 🚀 MAIN SCREEN (Responsive Wrapper)
@@ -28,8 +25,28 @@ class PortfolioScreen extends StatelessWidget {
   }
 }
 
+// IDE Theme Constants
+class IdeTheme {
+  static const Color kBg = Color(0xFF0D1117);
+  static const Color kIdePanel = Color(0xFF161B22);
+  static const Color kIdeDark = Color(0xFF0A0D12);
+  static const Color kBorder = Color(0xFF30363D);
+  static const Color kAccentBlue = Color(0xFF58A6FF);
+  static const Color kAccentPurple = Color(0xFFBC8DFF);
+  static const Color kTextLight = Color(0xFFC9D1D9);
+  static const Color kMuted = Color(0xFF8B949E);
+  static const Color kSuccess = Color(0xFF238636);
+
+  // Syntax Highlighting
+  static const Color kSyntaxKeyword = Color(0xFFFF7B72);
+  static const Color kSyntaxString = Color(0xFFA5D6FF);
+  static const Color kSyntaxClass = Color(0xFFD2A8FF);
+  static const Color kSyntaxType = Color(0xFF79C0FF);
+  static const Color kSyntaxComment = Color(0xFF8B949E);
+}
+
 // =========================================================
-// 🖥️ WEB LAYOUT (Split Screen)
+// 🖥️ WEB LAYOUT (Split Screen IDE)
 // =========================================================
 class _WebSplitLayout extends StatefulWidget {
   const _WebSplitLayout();
@@ -41,238 +58,110 @@ class _WebSplitLayout extends StatefulWidget {
 class _WebSplitLayoutState extends State<_WebSplitLayout> {
   ProjectModel _selectedProject = portfolioData.first;
 
-  static const Color kBg = Color(0xFF0D1117);
-  static const Color kBorder = Color(0xFF30363D);
-  static const Color kAccentBlue = Color(0xFF58A6FF);
-  static const Color kTextLight = Color(0xFFC9D1D9);
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: kBg,
-      body: Stack(
-        children: [
-          // --- MAIN SPLIT CONTENT ---
-          Row(
+    // Note: No Scaffold or Navbar here. Handled by IdeBaseScreen.
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // --- LEFT PANEL: File Explorer ---
+        Container(
+          width: 300,
+          decoration: const BoxDecoration(
+            color: IdeTheme.kIdePanel,
+            border: Border(right: BorderSide(color: IdeTheme.kBorder)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- LEFT PANEL: List ---
+              _buildExplorerHeader(),
               Expanded(
-                flex: 3,
-                child: Container(
-                  decoration: const BoxDecoration(
-                    border: Border(right: BorderSide(color: kBorder)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 90), // Push content below the NavBar
-                      _buildHeader(),
-                      Expanded(
-                        child: ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                          itemCount: portfolioData.length,
-                          itemBuilder: (context, index) {
-                            final project = portfolioData[index];
-                            final isSelected = project.title == _selectedProject.title;
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: portfolioData.length,
+                  itemBuilder: (context, index) {
+                    final project = portfolioData[index];
+                    final isSelected = project.title == _selectedProject.title;
 
-                            // Entrance animation for list items
-                            return TweenAnimationBuilder<double>(
-                              tween: Tween(begin: 0.0, end: 1.0),
-                              duration: Duration(milliseconds: 400 + (index * 100)),
-                              curve: Curves.easeOutCubic,
-                              builder: (context, value, child) {
-                                return Transform.translate(
-                                  offset: Offset(-20 * (1 - value), 0),
-                                  child: Opacity(
-                                    opacity: value,
-                                    child: child,
-                                  ),
-                                );
-                              },
-                              child: _WebProjectListItem(
-                                project: project,
-                                isSelected: isSelected,
-                                onTap: () {
-                                  setState(() {
-                                    _selectedProject = project;
-                                  });
-                                },
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // --- RIGHT PANEL: Gallery & Details ---
-              Expanded(
-                flex: 7,
-                child: Container(
-                  padding: const EdgeInsets.only(top: 80), // Push content below the NavBar
-                  // Smooth fade transition when selecting a new project
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 400),
-                    switchInCurve: Curves.easeOut,
-                    switchOutCurve: Curves.easeIn,
-                    child: _GalleryDetailView(
-                      key: ValueKey(_selectedProject.title),
-                      project: _selectedProject,
-                    ),
-                  ),
+                    return _IdeFileListItem(
+                      project: project,
+                      isSelected: isSelected,
+                      onTap: () => setState(() => _selectedProject = project),
+                    );
+                  },
                 ),
               ),
             ],
           ),
+        ),
 
-          // --- FLOATING GLASSMORPHISM NAVBAR ---
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: ClipRRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(
-                  color: kBg.withOpacity(0.8),
-                  child: _buildNavBar(context),
-                ),
+        // --- RIGHT PANEL: Editor & Preview ---
+        Expanded(
+          child: Container(
+            color: IdeTheme.kBg,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeIn,
+              child: _GalleryDetailView(
+                key: ValueKey(_selectedProject.title),
+                project: _selectedProject,
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  // --- NAVBAR WIDGET ---
-  Widget _buildNavBar(BuildContext context) {
+  Widget _buildExplorerHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: kBorder)),
+        border: Border(bottom: BorderSide(color: IdeTheme.kBorder)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.asset(
-                  "assets/sa_logo.png",
-                  width: 32,
-                  height: 32,
-                  fit: BoxFit.cover,
-                  errorBuilder: (c, o, s) => const Icon(Icons.code, color: kAccentBlue),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                "ScaleAxis",
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: kTextLight,
-                ),
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              _navLink("Home", () {
-                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const IntroSection()), (route) => false);
-              }, isActive: false),
-              const SizedBox(width: 40),
-              // ACTIVE HIGHLIGHT FOR PORTFOLIO
-              _navLink("Portfolio", () {}, isActive: true),
-              const SizedBox(width: 40),
-              _navLink("Contact Us", () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const ContactUsScreen()));
-              }, isActive: false),
-            ],
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _navLink(String text, VoidCallback onTap, {bool isActive = false}) {
-    return InkWell(
-      onTap: onTap,
-      hoverColor: Colors.transparent,
-      splashColor: Colors.transparent,
-      highlightColor: Colors.transparent,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+          const Icon(Icons.keyboard_arrow_down, color: IdeTheme.kMuted, size: 16),
+          const SizedBox(width: 8),
           Text(
-            text,
-            style: GoogleFonts.poppins(
-              color: isActive ? kAccentBlue : kTextLight,
-              fontWeight: FontWeight.w500,
-              fontSize: 14,
-              shadows: isActive ? [Shadow(color: kAccentBlue.withOpacity(0.5), blurRadius: 10)] : [],
+            "PORTFOLIO_PROJECTS",
+            style: GoogleFonts.robotoMono(
+              color: IdeTheme.kTextLight,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1,
             ),
           ),
-          if (isActive)
-            Container(
-              margin: const EdgeInsets.only(top: 4),
-              width: 4,
-              height: 4,
-              decoration: const BoxDecoration(color: kAccentBlue, shape: BoxShape.circle),
-            )
-        ],
-      ),
-    );
-  }
-
-  // --- UPDATED HEADER (Name removed since it's in the navbar) ---
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("Our Projects",
-              style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24)),
-          const SizedBox(height: 6),
-          Text("Select a project to view details",
-              style: GoogleFonts.robotoMono(color: const Color(0xFF8B949E), fontSize: 12)),
         ],
       ),
     );
   }
 }
 
-class _WebProjectListItem extends StatefulWidget {
+class _IdeFileListItem extends StatefulWidget {
   final ProjectModel project;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _WebProjectListItem({
-    required this.project,
-    required this.isSelected,
-    required this.onTap,
-  });
+  const _IdeFileListItem({required this.project, required this.isSelected, required this.onTap});
 
   @override
-  State<_WebProjectListItem> createState() => _WebProjectListItemState();
+  State<_IdeFileListItem> createState() => _IdeFileListItemState();
 }
 
-class _WebProjectListItemState extends State<_WebProjectListItem> {
+class _IdeFileListItemState extends State<_IdeFileListItem> {
   bool _isHovered = false;
+
+  // Converts "UE Customer App" -> "ue_customer_app.dart"
+  String _toFileName(String title) {
+    return "${title.toLowerCase().replaceAll(' ', '_')}.dart";
+  }
 
   @override
   Widget build(BuildContext context) {
     final bool active = widget.isSelected;
     final bool highlight = _isHovered || active;
-    const Color kAccent = Color(0xFF58A6FF);
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -280,57 +169,26 @@ class _WebProjectListItemState extends State<_WebProjectListItem> {
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: active ? const Color(0xFF1F242C) : (highlight ? const Color(0xFF161B22) : Colors.transparent),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: active ? kAccent.withOpacity(0.5) : (highlight ? const Color(0xFF30363D) : Colors.transparent),
-            ),
-          ),
+        child: Container(
+          color: active ? IdeTheme.kAccentBlue.withOpacity(0.1) : (highlight ? IdeTheme.kBg : Colors.transparent),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
           child: Row(
             children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                    color: active ? kAccent : const Color(0xFF30363D),
-                    shape: BoxShape.circle,
-                    boxShadow: active ? [BoxShadow(color: kAccent.withOpacity(0.4), blurRadius: 8)] : []
-                ),
+              Icon(
+                widget.project.isWeb ? Icons.html : Icons.flutter_dash,
+                color: widget.project.isWeb ? Colors.orangeAccent : IdeTheme.kAccentBlue,
+                size: 16,
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.project.title,
-                      style: GoogleFonts.poppins(
-                        color: highlight ? Colors.white : const Color(0xFFC9D1D9),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.project.description,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.roboto(
-                        color: const Color(0xFF8B949E),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  _toFileName(widget.project.title),
+                  style: GoogleFonts.robotoMono(
+                    color: active ? IdeTheme.kAccentBlue : (highlight ? IdeTheme.kTextLight : IdeTheme.kMuted),
+                    fontSize: 13,
+                  ),
                 ),
               ),
-              if (active)
-                const Icon(Icons.arrow_forward_ios, color: kAccent, size: 14),
             ],
           ),
         ),
@@ -340,11 +198,10 @@ class _WebProjectListItemState extends State<_WebProjectListItem> {
 }
 
 // ---------------------------------------------------------
-// Component: The Right Side Gallery (Web)
+// Component: The Right Side Editor/Gallery (Web)
 // ---------------------------------------------------------
 class _GalleryDetailView extends StatefulWidget {
   final ProjectModel project;
-
   const _GalleryDetailView({super.key, required this.project});
 
   @override
@@ -355,14 +212,17 @@ class _GalleryDetailViewState extends State<_GalleryDetailView> {
   final PageController _pageController = PageController();
   int _currentIndex = 0;
 
+  String _toClassName(String title) {
+    return title.replaceAll(' ', '');
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasImages = widget.project.images.isNotEmpty;
-    const kAccent = Color(0xFF58A6FF);
 
     return Row(
       children: [
-        // 1. DETAILS SECTION
+        // 1. CODE EDITOR SECTION (Details)
         Expanded(
           flex: 5,
           child: Padding(
@@ -371,122 +231,165 @@ class _GalleryDetailViewState extends State<_GalleryDetailView> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Badge as Annotation
                 if (widget.project.badge != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                        color: kAccent.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: kAccent.withOpacity(0.3))),
-                    child: Text(
-                      widget.project.badge!.toUpperCase(),
-                      style: GoogleFonts.robotoMono(
-                          color: kAccent,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold),
-                    ),
+                  Text(
+                    "@ProjectBadge('${widget.project.badge}')",
+                    style: GoogleFonts.robotoMono(color: IdeTheme.kAccentPurple, fontSize: 14, fontWeight: FontWeight.bold),
                   ),
-                Hero(
-                  tag: 'title-${widget.project.title}',
-                  child: Material(
-                    color: Colors.transparent,
-                    child: Text(
-                      widget.project.title,
-                      style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 42,
-                          fontWeight: FontWeight.bold,
-                          height: 1.1),
-                    ),
+
+                // Class Declaration
+                RichText(
+                  text: TextSpan(
+                    style: GoogleFonts.robotoMono(fontSize: 24, fontWeight: FontWeight.bold, height: 1.5),
+                    children: [
+                      const TextSpan(text: "class ", style: TextStyle(color: IdeTheme.kSyntaxKeyword)),
+                      TextSpan(text: "${_toClassName(widget.project.title)} ", style: const TextStyle(color: IdeTheme.kSyntaxClass)),
+                      const TextSpan(text: "extends ", style: TextStyle(color: IdeTheme.kSyntaxKeyword)),
+                      TextSpan(text: widget.project.isWeb ? "WebPlatform" : "MobileApp", style: const TextStyle(color: IdeTheme.kSyntaxClass)),
+                      const TextSpan(text: " {", style: TextStyle(color: IdeTheme.kTextLight)),
+                    ],
                   ),
                 ),
+
                 const SizedBox(height: 16),
-                Text(
-                  widget.project.description,
-                  style: GoogleFonts.roboto(
-                      color: const Color(0xFFC9D1D9),
-                      fontSize: 16,
-                      height: 1.6),
+
+                // Description as a Block Comment
+                Padding(
+                  padding: const EdgeInsets.only(left: 16.0),
+                  child: Text(
+                    "/**\n * ${widget.project.description.replaceAll('\n', '\n * ')}\n */",
+                    style: GoogleFonts.robotoMono(color: IdeTheme.kSyntaxComment, fontSize: 14, height: 1.6),
+                  ),
                 ),
+
                 const SizedBox(height: 24),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: widget.project.techStack
-                      .map((t) => Chip(
-                    label: Text(t),
-                    backgroundColor: const Color(0xFF161B22),
-                    labelStyle: GoogleFonts.robotoMono(color: const Color(0xFF8B949E), fontSize: 12),
-                    side: const BorderSide(color: Color(0xFF30363D)),
-                  ))
-                      .toList(),
+
+                // Tech Stack as a List
+                Padding(
+                  padding: const EdgeInsets.only(left: 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      RichText(
+                        text: TextSpan(
+                          style: GoogleFonts.robotoMono(fontSize: 14),
+                          children: const [
+                            TextSpan(text: "List", style: TextStyle(color: IdeTheme.kSyntaxClass)),
+                            TextSpan(text: "<", style: TextStyle(color: IdeTheme.kTextLight)),
+                            TextSpan(text: "String", style: TextStyle(color: IdeTheme.kSyntaxClass)),
+                            TextSpan(text: "> ", style: TextStyle(color: IdeTheme.kTextLight)),
+                            TextSpan(text: "techStack ", style: TextStyle(color: IdeTheme.kSyntaxType)),
+                            TextSpan(text: "= [", style: TextStyle(color: IdeTheme.kTextLight)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8, runSpacing: 8,
+                        children: widget.project.techStack.map((t) => _TechChip(text: t)).toList(),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text("];", style: TextStyle(color: IdeTheme.kTextLight, fontFamily: 'Roboto Mono', fontSize: 14)),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 32),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    if (widget.project.playStoreLink != null)
-                      _StoreButton(
-                        icon: Icons.android,
-                        label: "Google Play",
-                        onTap: () => launchUrl(Uri.parse(widget.project.playStoreLink!)),
-                      ),
-                    if (widget.project.appStoreLink != null)
-                      _StoreButton(
-                        icon: Icons.apple,
-                        label: "App Store",
-                        onTap: () => launchUrl(Uri.parse(widget.project.appStoreLink!)),
-                      ),
-                    // NEW: Handles launching the web URL
-                    if (widget.project.webLink != null)
-                      _StoreButton(
-                        icon: Icons.language,
-                        label: "Visit Website",
-                        onTap: () => launchUrl(Uri.parse(widget.project.webLink!)),
-                      ),
-                  ],
+
+                const SizedBox(height: 40),
+
+                // Action Buttons
+                Padding(
+                  padding: const EdgeInsets.only(left: 16.0),
+                  child: Wrap(
+                    spacing: 12, runSpacing: 12,
+                    children: [
+                      if (widget.project.playStoreLink != null)
+                        _IdeRunButton(icon: Icons.android, label: "Run PlayStore", color: IdeTheme.kSuccess, onTap: () => launchUrl(Uri.parse(widget.project.playStoreLink!))),
+                      if (widget.project.appStoreLink != null)
+                        _IdeRunButton(icon: Icons.apple, label: "Run AppStore", color: IdeTheme.kAccentBlue, onTap: () => launchUrl(Uri.parse(widget.project.appStoreLink!))),
+                      if (widget.project.webLink != null)
+                        _IdeRunButton(icon: Icons.language, label: "Launch Web", color: IdeTheme.kAccentPurple, onTap: () => launchUrl(Uri.parse(widget.project.webLink!))),
+                    ],
+                  ),
                 ),
+
+                const SizedBox(height: 16),
+                const Text("}", style: TextStyle(color: IdeTheme.kTextLight, fontFamily: 'Roboto Mono', fontSize: 24, fontWeight: FontWeight.bold)),
               ],
             ),
           ),
         ),
 
-        // 2. MOCKUP SECTION
+        // 2. MOCKUP/PREVIEW SECTION
         Expanded(
           flex: 6,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20.0),
+          child: Container(
+            margin: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: IdeTheme.kIdeDark,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: IdeTheme.kBorder),
+            ),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Flexible(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: widget.project.isWeb ? 16.0 : 40.0),
-                    child: widget.project.isWeb
-                        ? _buildLaptopMockup(hasImages)
-                        : _buildPhoneMockup(hasImages),
+                // Preview Header
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: const BoxDecoration(
+                    color: IdeTheme.kIdePanel,
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                    border: Border(bottom: BorderSide(color: IdeTheme.kBorder)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.preview, color: IdeTheme.kMuted, size: 16),
+                      const SizedBox(width: 8),
+                      Text("Previewer", style: GoogleFonts.robotoMono(color: IdeTheme.kTextLight, fontSize: 12)),
+                      const Spacer(),
+                      Row(
+                        children: [
+                          Container(width: 10, height: 10, decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.redAccent)),
+                          const SizedBox(width: 6),
+                          Container(width: 10, height: 10, decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.orangeAccent)),
+                          const SizedBox(width: 6),
+                          Container(width: 10, height: 10, decoration: const BoxDecoration(shape: BoxShape.circle, color: IdeTheme.kSuccess)),
+                        ],
+                      )
+                    ],
                   ),
                 ),
-                if (hasImages && widget.project.images.length > 1) ...[
-                  const SizedBox(height: 30),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(widget.project.images.length, (index) {
-                      return AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width: _currentIndex == index ? 24 : 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: _currentIndex == index ? kAccent : Colors.white24,
-                          borderRadius: BorderRadius.circular(4),
+                // Mockup
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Flexible(
+                          child: widget.project.isWeb ? _buildLaptopMockup(hasImages) : _buildPhoneMockup(hasImages),
                         ),
-                      );
-                    }),
+                        if (hasImages && widget.project.images.length > 1) ...[
+                          const SizedBox(height: 20),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(widget.project.images.length, (index) {
+                              return AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                margin: const EdgeInsets.symmetric(horizontal: 4),
+                                width: _currentIndex == index ? 24 : 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: _currentIndex == index ? IdeTheme.kAccentBlue : IdeTheme.kBorder,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              );
+                            }),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
-                ],
+                ),
               ],
             ),
           ),
@@ -495,6 +398,7 @@ class _GalleryDetailViewState extends State<_GalleryDetailView> {
     );
   }
 
+  // --- Web Mockups ---
   Widget _buildLaptopMockup(bool hasImages) {
     return Center(
       child: ConstrainedBox(
@@ -504,41 +408,25 @@ class _GalleryDetailViewState extends State<_GalleryDetailView> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                  color: const Color(0xFF161B22),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                  border: Border.all(color: const Color(0xFF30363D), width: 2),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 40, offset: const Offset(0, 10))
-                  ]
+                color: const Color(0xFF161B22),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                border: Border.all(color: IdeTheme.kBorder, width: 2),
               ),
               child: AspectRatio(
                 aspectRatio: 16 / 9,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(4),
-                  child: Container(
-                    color: Colors.black,
-                    child: hasImages ? _buildImageSlider() : _buildNoPreview(),
-                  ),
+                  child: Container(color: Colors.black, child: hasImages ? _buildImageSlider() : _buildNoPreview()),
                 ),
               ),
             ),
             Container(
-              height: 16,
-              decoration: const BoxDecoration(
-                color: Color(0xFF30363D),
-                borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
-              ),
+              height: 12,
+              decoration: const BoxDecoration(color: IdeTheme.kBorder, borderRadius: BorderRadius.vertical(bottom: Radius.circular(8))),
               alignment: Alignment.topCenter,
-              child: Container(
-                width: 80,
-                height: 4,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF21262D),
-                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(4)),
-                ),
-              ),
+              child: Container(width: 80, height: 3, decoration: const BoxDecoration(color: Color(0xFF21262D), borderRadius: BorderRadius.vertical(bottom: Radius.circular(4)))),
             ),
           ],
         ),
@@ -549,23 +437,19 @@ class _GalleryDetailViewState extends State<_GalleryDetailView> {
   Widget _buildPhoneMockup(bool hasImages) {
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 320),
+        constraints: const BoxConstraints(maxWidth: 300),
         child: AspectRatio(
           aspectRatio: 9 / 19.5,
           child: Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
                 color: const Color(0xFF21262D),
-                borderRadius: BorderRadius.circular(36),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 40, spreadRadius: 5, offset: const Offset(0, 10))
-                ]),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: IdeTheme.kBorder, width: 2)
+            ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
-              child: Container(
-                color: Colors.black,
-                child: hasImages ? _buildImageSlider() : _buildNoPreview(),
-              ),
+              borderRadius: BorderRadius.circular(16),
+              child: Container(color: Colors.black, child: hasImages ? _buildImageSlider() : _buildNoPreview()),
             ),
           ),
         ),
@@ -583,49 +467,28 @@ class _GalleryDetailViewState extends State<_GalleryDetailView> {
           widget.project.images[index],
           fit: BoxFit.cover,
           alignment: Alignment.topCenter,
-          errorBuilder: (ctx, _, __) => Container(
-            color: const Color(0xFF161B22),
-            child: const Icon(Icons.broken_image, color: Colors.grey),
-          ),
+          errorBuilder: (ctx, _, __) => Container(color: IdeTheme.kIdePanel, child: const Icon(Icons.broken_image, color: IdeTheme.kMuted)),
         );
       },
     );
   }
 
-  Widget _buildNoPreview() {
-    return Center(
-      child: Text("No Preview", style: GoogleFonts.poppins(color: Colors.grey)),
-    );
-  }
+  Widget _buildNoPreview() => Center(child: Text("// No Preview Data", style: GoogleFonts.robotoMono(color: IdeTheme.kMuted)));
 }
 
 // =========================================================
-// 📱 MOBILE LAYOUT (List of Cards)
+// 📱 MOBILE LAYOUT (List of IDE Snippet Cards)
 // =========================================================
 class _MobileLayout extends StatelessWidget {
   const _MobileLayout();
 
+  String _toFileName(String title) => "${title.toLowerCase().replaceAll(' ', '_')}.dart";
+
   @override
   Widget build(BuildContext context) {
+    // Scaffold without Appbar, matches IdeBaseScreen perfectly
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1117),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0D1117), // Match background color seamlessly
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(
-          "Our Portfolio",
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 18),
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1.0),
-          child: Container(color: const Color(0xFF30363D), height: 1.0), // Subtle border
-        ),
-      ),
+      backgroundColor: IdeTheme.kBg,
       body: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: portfolioData.length,
@@ -633,82 +496,59 @@ class _MobileLayout extends StatelessWidget {
         itemBuilder: (context, index) {
           final project = portfolioData[index];
 
-          return TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0.0, end: 1.0),
-            duration: Duration(milliseconds: 400 + (index * 100)),
-            curve: Curves.easeOut,
-            builder: (context, value, child) {
-              return Opacity(
-                opacity: value,
-                child: Transform.translate(
-                  offset: Offset(0, 20 * (1 - value)),
-                  child: child,
-                ),
+          return InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => MobileDetailScreen(project: project)),
               );
             },
-            child: InkWell(
-              borderRadius: BorderRadius.circular(16),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => MobileDetailScreen(project: project)),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF161B22),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFF30363D)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Hero(
-                            tag: 'title-${project.title}',
-                            child: Material(
-                              color: Colors.transparent,
-                              child: Text(project.title,
-                                  style: GoogleFonts.poppins(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18)),
-                            ),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: IdeTheme.kIdePanel,
+                borderRadius: BorderRadius.circular(8), // Square IDE look
+                border: Border.all(color: IdeTheme.kBorder),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(project.isWeb ? Icons.html : Icons.flutter_dash, color: project.isWeb ? Colors.orangeAccent : IdeTheme.kAccentBlue, size: 16),
+                          const SizedBox(width: 8),
+                          Text(
+                            _toFileName(project.title),
+                            style: GoogleFonts.robotoMono(color: IdeTheme.kAccentBlue, fontWeight: FontWeight.bold, fontSize: 14),
                           ),
-                        ),
-                        if (project.badge != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF58A6FF).withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(project.badge!,
-                                style: GoogleFonts.robotoMono(color: const Color(0xFF58A6FF), fontSize: 10, fontWeight: FontWeight.bold)),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(project.description,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.roboto(color: const Color(0xFF8B949E), height: 1.4)),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Icon(project.isWeb ? Icons.laptop_mac : Icons.phone_iphone, color: Colors.grey, size: 14),
-                        const SizedBox(width: 6),
-                        Text(project.isWeb ? "Web Platform" : "Mobile App", style: GoogleFonts.roboto(color: Colors.grey, fontSize: 12)),
-                        const Spacer(),
-                        const Text("Tap to view details →", style: TextStyle(color: Color(0xFF58A6FF), fontSize: 12, fontWeight: FontWeight.bold))
-                      ],
-                    )
-                  ],
-                ),
+                        ],
+                      ),
+                      if (project.badge != null)
+                        Text("@${project.badge!.replaceAll(' ', '')}", style: GoogleFonts.robotoMono(color: IdeTheme.kAccentPurple, fontSize: 10, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                      "// ${project.description}",
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.robotoMono(color: IdeTheme.kSyntaxComment, fontSize: 12, height: 1.4)
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      const Icon(Icons.play_arrow, color: IdeTheme.kSuccess, size: 16),
+                      const SizedBox(width: 6),
+                      Text("Run Preview", style: GoogleFonts.robotoMono(color: IdeTheme.kSuccess, fontSize: 12)),
+                      const Spacer(),
+                      Text("View Source →", style: GoogleFonts.robotoMono(color: IdeTheme.kMuted, fontSize: 12))
+                    ],
+                  )
+                ],
               ),
             ),
           );
@@ -719,11 +559,10 @@ class _MobileLayout extends StatelessWidget {
 }
 
 // =========================================================
-// 📱 MOBILE DETAIL SCREEN (Navigated from List)
+// 📱 MOBILE DETAIL SCREEN (Full Screen Editor View)
 // =========================================================
 class MobileDetailScreen extends StatefulWidget {
   final ProjectModel project;
-
   const MobileDetailScreen({super.key, required this.project});
 
   @override
@@ -733,114 +572,151 @@ class MobileDetailScreen extends StatefulWidget {
 class _MobileDetailScreenState extends State<MobileDetailScreen> {
   final PageController _pageController = PageController();
   int _currentIndex = 0;
+  String _toFileName(String title) => "${title.toLowerCase().replaceAll(' ', '_')}.dart";
+  String _toClassName(String title) => title.replaceAll(' ', '');
 
   @override
   Widget build(BuildContext context) {
-    const kAccent = Color(0xFF58A6FF);
     final hasImages = widget.project.images.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1117),
+      backgroundColor: IdeTheme.kBg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF161B22),
+        backgroundColor: IdeTheme.kIdePanel,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: IdeTheme.kTextLight),
+        centerTitle: true,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(widget.project.isWeb ? Icons.html : Icons.flutter_dash, color: widget.project.isWeb ? Colors.orangeAccent : IdeTheme.kAccentBlue, size: 16),
+            const SizedBox(width: 8),
+            Text(_toFileName(widget.project.title), style: GoogleFonts.robotoMono(color: IdeTheme.kTextLight, fontSize: 14)),
+          ],
+        ),
+        bottom: PreferredSize(preferredSize: const Size.fromHeight(1), child: Container(color: IdeTheme.kBorder, height: 1)),
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- INFO SECTION ---
+            // --- CODE SECTION ---
             Padding(
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.all(20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Hero(
-                    tag: 'title-${widget.project.title}',
-                    child: Material(
-                      color: Colors.transparent,
-                      child: Text(
-                        widget.project.title,
-                        style: GoogleFonts.poppins(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
-                      ),
+                  if (widget.project.badge != null)
+                    Text("@ProjectBadge('${widget.project.badge}')", style: GoogleFonts.robotoMono(color: IdeTheme.kAccentPurple, fontSize: 12, fontWeight: FontWeight.bold)),
+
+                  RichText(
+                    text: TextSpan(
+                      style: GoogleFonts.robotoMono(fontSize: 20, fontWeight: FontWeight.bold, height: 1.5),
+                      children: [
+                        const TextSpan(text: "class ", style: TextStyle(color: IdeTheme.kSyntaxKeyword)),
+                        TextSpan(text: "${_toClassName(widget.project.title)} ", style: const TextStyle(color: IdeTheme.kSyntaxClass)),
+                        const TextSpan(text: "extends ", style: TextStyle(color: IdeTheme.kSyntaxKeyword)),
+                        TextSpan(text: widget.project.isWeb ? "Web" : "App", style: const TextStyle(color: IdeTheme.kSyntaxClass)),
+                        const TextSpan(text: " {", style: TextStyle(color: IdeTheme.kTextLight)),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text(
-                    widget.project.description,
-                    style: GoogleFonts.roboto(color: const Color(0xFFC9D1D9), fontSize: 16, height: 1.5),
+
+                  Padding(
+                    padding: const EdgeInsets.only(left: 12.0),
+                    child: Text(
+                      "/**\n * ${widget.project.description.replaceAll('\n', '\n * ')}\n */",
+                      style: GoogleFonts.robotoMono(color: IdeTheme.kSyntaxComment, fontSize: 12, height: 1.5),
+                    ),
                   ),
                   const SizedBox(height: 20),
-                  Wrap(
-                    spacing: 8, runSpacing: 8,
-                    children: widget.project.techStack.map((t) => Chip(
-                      label: Text(t),
-                      backgroundColor: const Color(0xFF161B22),
-                      labelStyle: GoogleFonts.robotoMono(color: const Color(0xFF8B949E), fontSize: 12),
-                      side: const BorderSide(color: Color(0xFF30363D)),
-                    )).toList(),
+
+                  Padding(
+                    padding: const EdgeInsets.only(left: 12.0),
+                    child: Wrap(
+                      spacing: 8, runSpacing: 8,
+                      children: widget.project.techStack.map((t) => _TechChip(text: t)).toList(),
+                    ),
                   ),
 
-                  // Store Links
                   if (widget.project.playStoreLink != null || widget.project.appStoreLink != null || widget.project.webLink != null) ...[
                     const SizedBox(height: 24),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          if (widget.project.playStoreLink != null)
-                            _MobileStoreLink(icon: Icons.android, label: "Google Play", onTap: () => launchUrl(Uri.parse(widget.project.playStoreLink!))),
-
-                          if (widget.project.playStoreLink != null && (widget.project.appStoreLink != null || widget.project.webLink != null))
-                            const SizedBox(width: 12),
-
-                          if (widget.project.appStoreLink != null)
-                            _MobileStoreLink(icon: Icons.apple, label: "App Store", onTap: () => launchUrl(Uri.parse(widget.project.appStoreLink!))),
-
-                          if (widget.project.appStoreLink != null && widget.project.webLink != null)
-                            const SizedBox(width: 12),
-
-                          // NEW: Handles launching the web URL on Mobile
-                          if (widget.project.webLink != null)
-                            _MobileStoreLink(icon: Icons.language, label: "Visit Website", onTap: () => launchUrl(Uri.parse(widget.project.webLink!))),
-                        ],
+                    Padding(
+                      padding: const EdgeInsets.only(left: 12.0),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            if (widget.project.playStoreLink != null)
+                              _IdeRunButton(icon: Icons.android, label: "Google Play", color: IdeTheme.kSuccess, onTap: () => launchUrl(Uri.parse(widget.project.playStoreLink!))),
+                            if (widget.project.playStoreLink != null && (widget.project.appStoreLink != null || widget.project.webLink != null))
+                              const SizedBox(width: 8),
+                            if (widget.project.appStoreLink != null)
+                              _IdeRunButton(icon: Icons.apple, label: "App Store", color: IdeTheme.kAccentBlue, onTap: () => launchUrl(Uri.parse(widget.project.appStoreLink!))),
+                            if (widget.project.appStoreLink != null && widget.project.webLink != null)
+                              const SizedBox(width: 8),
+                            if (widget.project.webLink != null)
+                              _IdeRunButton(icon: Icons.language, label: "Website", color: IdeTheme.kAccentPurple, onTap: () => launchUrl(Uri.parse(widget.project.webLink!))),
+                          ],
+                        ),
                       ),
                     )
-                  ]
+                  ],
+                  const SizedBox(height: 16),
+                  const Text("}", style: TextStyle(color: IdeTheme.kTextLight, fontFamily: 'Roboto Mono', fontSize: 20, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
 
-            // --- GALLERY SECTION (WITH FRAMES) ---
+            // --- GALLERY SECTION ---
             if (hasImages)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+              Container(
+                margin: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                    color: IdeTheme.kIdeDark,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: IdeTheme.kBorder)
+                ),
                 child: Column(
                   children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: const BoxDecoration(
+                        color: IdeTheme.kIdePanel,
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+                        border: Border(bottom: BorderSide(color: IdeTheme.kBorder)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.preview, color: IdeTheme.kMuted, size: 14),
+                          const SizedBox(width: 8),
+                          Text("Previewer", style: GoogleFonts.robotoMono(color: IdeTheme.kTextLight, fontSize: 12)),
+                        ],
+                      ),
+                    ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      child: widget.project.isWeb
-                          ? _buildMobileViewLaptopMockup(hasImages)
-                          : _buildMobileViewPhoneMockup(hasImages),
+                      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                      child: widget.project.isWeb ? _buildMobileViewLaptopMockup(hasImages) : _buildMobileViewPhoneMockup(hasImages),
                     ),
-                    const SizedBox(height: 30),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(widget.project.images.length, (index) {
-                        return AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          width: _currentIndex == index ? 24 : 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: _currentIndex == index ? kAccent : const Color(0xFF30363D),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        );
-                      }),
-                    ),
-                    const SizedBox(height: 40),
+                    if (hasImages && widget.project.images.length > 1) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(widget.project.images.length, (index) {
+                          return AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            width: _currentIndex == index ? 24 : 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: _currentIndex == index ? IdeTheme.kAccentBlue : IdeTheme.kBorder,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          );
+                        }),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
                   ],
                 ),
               )
@@ -850,46 +726,29 @@ class _MobileDetailScreenState extends State<MobileDetailScreen> {
     );
   }
 
+  // --- Mobile Specific Mockups ---
   Widget _buildMobileViewLaptopMockup(bool hasImages) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-              color: const Color(0xFF161B22),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-              border: Border.all(color: const Color(0xFF30363D), width: 1.5),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 20, offset: const Offset(0, 10))
-              ]
+            color: const Color(0xFF161B22),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+            border: Border.all(color: IdeTheme.kBorder),
           ),
           child: AspectRatio(
             aspectRatio: 16 / 9,
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: Container(
-                color: Colors.black,
-                child: hasImages ? _buildImageSlider() : _buildNoPreview(),
-              ),
+              borderRadius: BorderRadius.circular(2),
+              child: Container(color: Colors.black, child: hasImages ? _buildImageSlider() : _buildNoPreview()),
             ),
           ),
         ),
         Container(
-          height: 12,
-          decoration: const BoxDecoration(
-            color: Color(0xFF30363D),
-            borderRadius: BorderRadius.vertical(bottom: Radius.circular(12)),
-          ),
-          alignment: Alignment.topCenter,
-          child: Container(
-            width: 50,
-            height: 3,
-            decoration: const BoxDecoration(
-              color: Color(0xFF21262D),
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(2)),
-            ),
-          ),
+          height: 8,
+          decoration: const BoxDecoration(color: IdeTheme.kBorder, borderRadius: BorderRadius.vertical(bottom: Radius.circular(8))),
         ),
       ],
     );
@@ -898,24 +757,19 @@ class _MobileDetailScreenState extends State<MobileDetailScreen> {
   Widget _buildMobileViewPhoneMockup(bool hasImages) {
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxHeight: 550),
+        constraints: const BoxConstraints(maxHeight: 450),
         child: AspectRatio(
           aspectRatio: 9 / 19.5,
           child: Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
                 color: const Color(0xFF21262D),
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 20, offset: const Offset(0, 10))
-                ]
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: IdeTheme.kBorder)
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(18),
-              child: Container(
-                color: Colors.black,
-                child: hasImages ? _buildImageSlider() : _buildNoPreview(),
-              ),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(color: Colors.black, child: hasImages ? _buildImageSlider() : _buildNoPreview()),
             ),
           ),
         ),
@@ -929,76 +783,69 @@ class _MobileDetailScreenState extends State<MobileDetailScreen> {
       itemCount: widget.project.images.length,
       onPageChanged: (index) => setState(() => _currentIndex = index),
       itemBuilder: (context, index) {
-        return Image.asset(
-          widget.project.images[index],
-          fit: BoxFit.cover,
-          alignment: Alignment.topCenter,
-          errorBuilder: (ctx, _, __) => Container(
-            color: const Color(0xFF161B22),
-            child: const Icon(Icons.broken_image, color: Colors.grey),
-          ),
-        );
+        return Image.asset(widget.project.images[index], fit: BoxFit.cover, alignment: Alignment.topCenter);
       },
     );
   }
 
-  Widget _buildNoPreview() {
-    return Center(
-      child: Text("No Preview", style: GoogleFonts.poppins(color: Colors.grey)),
-    );
-  }
+  Widget _buildNoPreview() => Center(child: Text("// No Preview", style: GoogleFonts.robotoMono(color: IdeTheme.kMuted)));
 }
 
 // =========================================================
-// 🧰 HELPERS / BUTTONS
+// 🧰 HELPERS / BUTTONS (IDE Styled)
 // =========================================================
 
-class _StoreButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _StoreButton({required this.icon, required this.label, required this.onTap});
+// Tech Stack Chip
+class _TechChip extends StatelessWidget {
+  final String text;
+  const _TechChip({required this.text});
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton.icon(
-      onPressed: onTap,
-      icon: Icon(icon, size: 18),
-      label: Text(label),
-      style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF21262D),
-          foregroundColor: Colors.white,
-          side: const BorderSide(color: Color(0xFF30363D)),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: IdeTheme.kSyntaxString.withOpacity(0.1),
+        border: Border.all(color: IdeTheme.kSyntaxString.withOpacity(0.3)),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        "\"$text\"",
+        style: GoogleFonts.robotoMono(color: IdeTheme.kSyntaxString, fontSize: 12),
       ),
     );
   }
 }
 
-class _MobileStoreLink extends StatelessWidget {
+// Run Button
+class _IdeRunButton extends StatelessWidget {
   final IconData icon;
   final String label;
+  final Color color;
   final VoidCallback onTap;
-  const _MobileStoreLink({required this.icon, required this.label, required this.onTap});
+
+  const _IdeRunButton({required this.icon, required this.label, required this.color, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(4),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: const Color(0xFF58A6FF).withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
+          color: color.withOpacity(0.1),
+          border: Border.all(color: color.withOpacity(0.3)),
+          borderRadius: BorderRadius.circular(4),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: const Color(0xFF58A6FF), size: 18),
+            Icon(Icons.play_arrow, color: color, size: 14),
+            const SizedBox(width: 4),
+            Icon(icon, color: color, size: 14),
             const SizedBox(width: 8),
-            Text(label, style: GoogleFonts.roboto(color: const Color(0xFF58A6FF), fontWeight: FontWeight.w600)),
+            Text(label, style: GoogleFonts.robotoMono(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
           ],
         ),
       ),
