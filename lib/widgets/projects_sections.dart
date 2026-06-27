@@ -812,7 +812,6 @@ class _MobileDetailScreenState extends State<MobileDetailScreen> {
               ),
             ),
 
-            // --- GALLERY SECTION (WITH FRAMES) ---
             if (hasImages)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16),
